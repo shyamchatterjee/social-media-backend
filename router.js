@@ -6,6 +6,8 @@ const User = require("./model/userscema");
 const post = require("./model/postsecma");
 
 let secretKey = "SHYAM";
+
+//email check middleware
 let registermiddleware = async (req, res, next) => {
   let finduser = await User.findOne({ email: req.body.email });
   if (!finduser) {
@@ -14,6 +16,7 @@ let registermiddleware = async (req, res, next) => {
   return res.json({ ok: false, massage: "You're email   allredy register" });
 };
 
+//token verify middleware
 let verifyTokenMiddleware = async (req, res, next) => {
   if (!req.cookies.token) {
     return res.status(404).json({ ok: false, massage: "Please login" });
@@ -26,7 +29,7 @@ let verifyTokenMiddleware = async (req, res, next) => {
   req.user = verify;
   return next();
 };
-
+//user register
 router.post("/register", registermiddleware, async (req, res) => {
   try {
     if (!req.body.name || !req.body.email || !req.body.password) {
@@ -45,6 +48,7 @@ router.post("/register", registermiddleware, async (req, res) => {
     return res.status(500).json({ ok: false, massage: "Server eror" });
   }
 });
+//user login
 router.post("/login", async (req, res) => {
   try {
     if (!req.body.email || !req.body.password) {
@@ -82,6 +86,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//post
 router.post("/post", verifyTokenMiddleware, async (req, res) => {
   try {
     if (!req.body.text || !req.body.image)
@@ -99,6 +104,7 @@ router.post("/post", verifyTokenMiddleware, async (req, res) => {
     return res.status(500).json({ ok: false, massage: "Server problem" });
   }
 });
+//like post
 router.get("/like/:id", verifyTokenMiddleware, async (req, res) => {
   let id = req.params.id;
   let findpost = await post.findById(id);
@@ -116,6 +122,7 @@ router.get("/like/:id", verifyTokenMiddleware, async (req, res) => {
     likepost: findpost.like.length,
   });
 });
+//get post
 router.get("/", verifyTokenMiddleware, async (req, res) => {
   let deta = await post
     .find()
@@ -125,6 +132,7 @@ router.get("/", verifyTokenMiddleware, async (req, res) => {
   console.log(deta);
   res.status(200).json({ ok: true, deta: deta });
 });
+//unlike post
 router.get("/unlike/:id", verifyTokenMiddleware, async (req, res) => {
   let id = req.params.id;
   let findpost = await post.findById(id);
@@ -142,6 +150,7 @@ router.get("/unlike/:id", verifyTokenMiddleware, async (req, res) => {
     likedeta: findpost.like.length,
   });
 });
+//comment
 router.post("/comment/:id", verifyTokenMiddleware, async (req, res) => {
   if (!req.body.text) {
     return res.status(404).json({ ok: false, massage: "Please fill the deta" });
@@ -162,6 +171,7 @@ router.post("/comment/:id", verifyTokenMiddleware, async (req, res) => {
     comment: findpost.comment.length,
   });
 });
+//delete post
 router.delete("/remove/:id", verifyTokenMiddleware, async (req, res) => {
   if (!req.params.id) {
     res.status(404).json({ ok: false, massage: "unvalied id" });
@@ -177,6 +187,7 @@ router.delete("/remove/:id", verifyTokenMiddleware, async (req, res) => {
   }
   return res.status(200).json({ ok: true, massage: "Your post deleted" });
 });
+//delete comment
 router.delete(
   "/comment/remove/:postid/:commentid",
   verifyTokenMiddleware,
