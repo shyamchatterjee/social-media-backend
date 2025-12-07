@@ -106,114 +106,140 @@ router.post("/post", verifyTokenMiddleware, async (req, res) => {
 });
 //like post
 router.get("/like/:id", verifyTokenMiddleware, async (req, res) => {
-  let id = req.params.id;
-  let findpost = await post.findById(id);
-  if (!findpost) {
-    return res.status(404).json({ ok: false, massage: "not like it" });
-  }
+  try {
+    let id = req.params.id;
+    let findpost = await post.findById(id);
+    if (!findpost) {
+      return res.status(404).json({ ok: false, massage: "not like it" });
+    }
 
-  if (!findpost.like.includes(req.user.id)) {
-    findpost.like.push(req.user.id);
+    if (!findpost.like.includes(req.user.id)) {
+      findpost.like.push(req.user.id);
+    }
+    await findpost.save();
+    return res.status(200).json({
+      ok: true,
+      massage: "Like the post",
+      likepost: findpost.like.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, massage: "Server problem" });
   }
-  await findpost.save();
-  return res.status(200).json({
-    ok: true,
-    massage: "Like the post",
-    likepost: findpost.like.length,
-  });
 });
 //get post
 router.get("/", verifyTokenMiddleware, async (req, res) => {
-  let deta = await post
-    .find()
-    .populate("user_id")
-    .populate("like")
-    .populate("comment.user_id");
-  console.log(deta);
-  res.status(200).json({ ok: true, deta: deta });
+  try {
+    let deta = await post
+      .find()
+      .populate("user_id")
+      .populate("like")
+      .populate("comment.user_id");
+    console.log(deta);
+    res.status(200).json({ ok: true, deta: deta });
+  } catch (err) {
+    return res.status(500).json({ ok: false, massage: "Server problem" });
+  }
 });
 //unlike post
 router.get("/unlike/:id", verifyTokenMiddleware, async (req, res) => {
-  let id = req.params.id;
-  let findpost = await post.findById(id);
+  try {
+    let id = req.params.id;
+    let findpost = await post.findById(id);
 
-  let removedeta = findpost.like.filter((element) => {
-    if (element.toString() !== req.user.id) {
-      return element;
-    }
-  });
-  findpost.like = removedeta;
-  await findpost.save();
-  res.status(200).json({
-    ok: true,
-    massage: "Unlike the post",
-    likedeta: findpost.like.length,
-  });
+    let removedeta = findpost.like.filter((element) => {
+      if (element.toString() !== req.user.id) {
+        return element;
+      }
+    });
+    findpost.like = removedeta;
+    await findpost.save();
+    res.status(200).json({
+      ok: true,
+      massage: "Unlike the post",
+      likedeta: findpost.like.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, massage: "Server problem" });
+  }
 });
 //comment
 router.post("/comment/:id", verifyTokenMiddleware, async (req, res) => {
-  if (!req.body.text) {
-    return res.status(404).json({ ok: false, massage: "Please fill the deta" });
+  try {
+    if (!req.body.text) {
+      return res
+        .status(404)
+        .json({ ok: false, massage: "Please fill the deta" });
+    }
+    let id = req.params.id;
+    let findpost = await post.findById(id);
+
+    findpost.comment.push({
+      text: req.body.text,
+      user_id: req.user.id,
+      user_name: req.user.name,
+    });
+    await findpost.save();
+
+    return res.status(200).json({
+      ok: true,
+      commentpost: findpost,
+      comment: findpost.comment.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, massage: "Server problem" });
   }
-  let id = req.params.id;
-  let findpost = await post.findById(id);
-
-  findpost.comment.push({
-    text: req.body.text,
-    user_id: req.user.id,
-    user_name: req.user.name,
-  });
-  await findpost.save();
-
-  return res.status(200).json({
-    ok: true,
-    commentpost: findpost,
-    comment: findpost.comment.length,
-  });
 });
 //delete post
 router.delete("/remove/:id", verifyTokenMiddleware, async (req, res) => {
-  if (!req.params.id) {
-    res.status(404).json({ ok: false, massage: "unvalied id" });
-  }
+  try {
+    if (!req.params.id) {
+      res.status(404).json({ ok: false, massage: "unvalied id" });
+    }
 
-  let removedeta = await post
-    .find({ user_id: req.user.id })
-    .findByIdAndDelete(req.params.id);
-  if (!removedeta) {
-    return res
-      .status(404)
-      .json({ ok: false, massage: "anathor post not deleted" });
+    let removedeta = await post
+      .find({ user_id: req.user.id })
+      .findByIdAndDelete(req.params.id);
+    if (!removedeta) {
+      return res
+        .status(404)
+        .json({ ok: false, massage: "anathor post not deleted" });
+    }
+    return res.status(200).json({ ok: true, massage: "Your post deleted" });
+  } catch (err) {
+    return res.status(500).json({ ok: false, massage: "Server problem" });
   }
-  return res.status(200).json({ ok: true, massage: "Your post deleted" });
 });
 //delete comment
 router.delete(
   "/comment/remove/:postid/:commentid",
   verifyTokenMiddleware,
   async (req, res) => {
-    let findeta = await post.findById(req.params.postid);
-    if (!findeta)
-      return res.status(404).json({ ok: false, massage: "post not found" });
-    let checkuser = findeta.comment.find((element) => {
-      if (element.user_id == req.user.id) {
-        return element;
-      }
-    });
-    if (!checkuser) {
-      return res.status(404).json({
-        ok: false,
-        massage: "only comment owner can be massage delete",
+    try {
+      let findeta = await post.findById(req.params.postid);
+      if (!findeta)
+        return res.status(404).json({ ok: false, massage: "post not found" });
+      let checkuser = findeta.comment.find((element) => {
+        if (element.user_id == req.user.id) {
+          return element;
+        }
       });
-    }
-    let removedeta = findeta.comment.filter((element) => {
-      if (element._id.toString() !== req.params.commentid) {
-        return element;
+      if (!checkuser) {
+        return res.status(404).json({
+          ok: false,
+          massage: "only comment owner can be massage delete",
+        });
       }
-    });
-    findeta.comment = removedeta;
-    await findeta.save();
-    return res.status(200).json({ ok: true, massage: "comment deleted" });
+      let removedeta = findeta.comment.filter((element) => {
+        if (element._id.toString() !== req.params.commentid) {
+          return element;
+        }
+      });
+      findeta.comment = removedeta;
+      await findeta.save();
+      return res.status(200).json({ ok: true, massage: "comment deleted" });
+    } catch (err) {
+      return res.status(500).json({ ok: false, massage: "Server problem" });
+    }
   }
 );
 module.exports = router;
