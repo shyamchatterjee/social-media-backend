@@ -145,7 +145,8 @@ router.get("/", verifyTokenMiddleware, async (req, res) => {
       .find()
       .populate("user_id")
       .populate("like")
-      .populate("comment.user_id");
+      .populate("comment.user_id")
+      .sort({ createdAt: -1 });
     console.log(deta);
     res.status(200).json({ ok: true, deta: deta });
   } catch (err) {

@@ -22,6 +22,7 @@ let Login = () => {
         if (!value.ok) {
           return setmsg(value.massage);
         }
+        setmsg("");
         toast.success(value.massage + "✅", {
           position: "top-right",
           autoClose: 3000,

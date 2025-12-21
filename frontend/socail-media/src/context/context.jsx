@@ -58,6 +58,7 @@ export let ContextFunction = ({ children }) => {
         if (!value.ok) {
           return setmsg(value.massage);
         }
+        setmsg("");
         toast.success(value.massage + "✅", {
           position: "top-right",
           autoClose: 3000,
@@ -89,7 +90,8 @@ export let ContextFunction = ({ children }) => {
         if (!value.ok) {
           return setmsg(value.massage);
         }
-        setpostDeta({ text: "", image: "" });
+        setmsg("");
+        setpostDeta("");
         return toast.success(value.massage + "✅", {
           position: "top-right",
           autoClose: 3000,
