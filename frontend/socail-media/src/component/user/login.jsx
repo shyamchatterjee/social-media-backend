@@ -4,7 +4,7 @@ import { Bounce, toast } from "react-toastify";
 
 let Login = () => {
   let [from, setfrom] = useState({ email: "", password: "" });
-  let { msg, setmsg } = useState("");
+  let [msg, setmsg] = useState("");
   let navigate = useNavigate();
   let submit = (from) => {
     fetch("http://localhost:8000/login", {
@@ -22,7 +22,7 @@ let Login = () => {
         if (!value.ok) {
           return setmsg(value.massage);
         }
-        setmsg("");
+
         toast.success(value.massage + "✅", {
           position: "top-right",
           autoClose: 3000,
@@ -34,6 +34,7 @@ let Login = () => {
           theme: "dark",
           transition: Bounce,
         });
+        setmsg("");
         return navigate("/");
       });
   };
